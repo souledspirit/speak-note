@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Mail, Lock, User, LogIn, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Auth() {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
@@ -17,8 +19,10 @@ export default function Auth() {
     confirmPassword: "" 
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginForm.email || !loginForm.password) {
       toast({
@@ -28,14 +32,28 @@ export default function Auth() {
       });
       return;
     }
-    
-    toast({
-      title: "Login successful",
-      description: "Welcome back to SpeakNote!",
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: loginForm.email,
+      password: loginForm.password,
     });
+    setLoading(false);
+    if (error) {
+      toast({
+        title: "Login failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Login successful",
+        description: "Welcome back to SpeakNote!",
+      });
+      navigate("/home");
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registerForm.name || !registerForm.email || !registerForm.password) {
       toast({
@@ -45,7 +63,6 @@ export default function Auth() {
       });
       return;
     }
-    
     if (registerForm.password !== registerForm.confirmPassword) {
       toast({
         title: "Password mismatch",
@@ -54,11 +71,25 @@ export default function Auth() {
       });
       return;
     }
-    
-    toast({
-      title: "Account created",
-      description: "Welcome to SpeakNote!",
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email: registerForm.email,
+      password: registerForm.password,
+      options: { data: { name: registerForm.name } },
     });
+    setLoading(false);
+    if (error) {
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Account created",
+        description: "Check your email to confirm your account.",
+      });
+    }
   };
 
   return (
@@ -93,6 +124,7 @@ export default function Auth() {
                       value={loginForm.email}
                       onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
                       className="pl-10"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -108,13 +140,14 @@ export default function Auth() {
                       value={loginForm.password}
                       onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
                       className="pl-10"
+                      disabled={loading}
                     />
                   </div>
                 </div>
                 
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={loading}>
                   <LogIn className="h-4 w-4 mr-2" />
-                  Sign In
+                  {loading ? "Signing In..." : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
@@ -133,6 +166,7 @@ export default function Auth() {
                       value={registerForm.name}
                       onChange={(e) => setRegisterForm(prev => ({ ...prev, name: e.target.value }))}
                       className="pl-10"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -148,6 +182,7 @@ export default function Auth() {
                       value={registerForm.email}
                       onChange={(e) => setRegisterForm(prev => ({ ...prev, email: e.target.value }))}
                       className="pl-10"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -163,6 +198,7 @@ export default function Auth() {
                       value={registerForm.password}
                       onChange={(e) => setRegisterForm(prev => ({ ...prev, password: e.target.value }))}
                       className="pl-10"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -178,13 +214,14 @@ export default function Auth() {
                       value={registerForm.confirmPassword}
                       onChange={(e) => setRegisterForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
                       className="pl-10"
+                      disabled={loading}
                     />
                   </div>
                 </div>
                 
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={loading}>
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Create Account
+                  {loading ? "Signing Up..." : "Create Account"}
                 </Button>
               </form>
             </TabsContent>
