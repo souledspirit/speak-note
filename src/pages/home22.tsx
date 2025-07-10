@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Mic, MicOff, Save, Play, Square, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export default function Dashboard() {
+export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcription, setTranscription] = useState("");
   const navigate = useNavigate();
